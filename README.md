@@ -1,6 +1,6 @@
-# Tangerine
+# tangerine
 
-**Tangerine** is a build script for building and distributing iOS apps.
+**tangerine** is a build script for building and distributing iOS apps.
 
 ## Usage
 
@@ -11,14 +11,14 @@ Then just run the following command:
 
 ## Features
 
-Currently **Tangerine** supports the following:
+Currently **tangerine** supports the following:
 
-* Downloading the latest provisioning profile from the Apple Developer portal with [cupertino](http://)
-* Distrubution through [TestFlight](http://)
+* Downloading the latest provisioning profile from the Apple Developer portal with [cupertino](https://github.com/nomad/Cupertino)
+* Distrubution through [TestFlight](https://www.testflightapp.com)
 
 Other less exciting features:
 
-* [Cocoapods](http://)
+* [Cocoapods](http://cocoapods.org/)
 * Custom keychains.
 * Testing
-* Building with [xctool](http://)
+* Building with [xctool](https://github.com/facebook/xctool)
