@@ -72,7 +72,7 @@ setup_keychain ()
 {
     # Unlock Keychain
     print_title "Unlocking Keychain"
-    if [ ! -f KEYCHAIN_PATH ]
+    if [ ! -f "$KEYCHAIN_PATH" ]
     then
         echo "*** Keychain File not found"
         fail 1
@@ -97,7 +97,7 @@ setup_profile ()
 
     rm -rf *.mobileprovision
 
-    set -o pipefail && PROFILE=$(ios profiles:download "$PROVISIONING_PROFILE_NAME" -u "$APPLE_DEVELOPER_USERNAME" -p "$APPLE_DEVELOPER_PASSWORD" --team "$APPLE_DEVELOPER_TEAM" | grep -Eoh "[A-Za-z0-9_]+\.mobileprovision") || fail $?
+    set -o pipefail && PROFILE=$(ios profiles:download --type distribution "$PROVISIONING_PROFILE_NAME" -u "$APPLE_DEVELOPER_USERNAME" -p "$APPLE_DEVELOPER_PASSWORD" --team "$APPLE_DEVELOPER_TEAM" | grep -Eoh "[A-Za-z0-9_]+\.mobileprovision") || fail $?
     PROFILE_UUID=$(uuid_from_profile "$PROFILE")
 
     export PROFILE
