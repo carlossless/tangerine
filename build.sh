@@ -148,7 +148,7 @@ build_archive ()
     # Build
     print_title "Building Application"
 
-    xctool -scheme "$XCSCHEME" -workspace "$XCWORKSPACE" -configuration "$BUILD_CONFIGURATION" clean archive -archivePath "$WORKSPACE/build/$XCSCHEME" "CODE_SIGN_IDENTITY=$CODE_SIGNING_IDENTITY" PROVISIONING_PROFILE="$PROFILE_UUID" || fail $?;
+    set -o pipefail && (xcodebuild -scheme "$XCSCHEME" -workspace "$XCWORKSPACE" -configuration "$BUILD_CONFIGURATION" clean archive -archivePath "$WORKSPACE/build/$XCSCHEME" "CODE_SIGN_IDENTITY=$CODE_SIGNING_IDENTITY" PROVISIONING_PROFILE="$PROFILE_UUID" | xcpretty -c) || fail $?;
 }
 
 test_application ()
@@ -156,7 +156,7 @@ test_application ()
     # Test
     print_title "Testing Application"
 
-    xctool -scheme "$XCSCHEME" -workspace "$XCWORKSPACE" -configuration "$BUILD_CONFIGURATION" -sdk iphonesimulator test || fail $?;
+    set -o pipefail && (xcodebuild -scheme "$XCSCHEME" -workspace "$XCWORKSPACE" -configuration "$BUILD_CONFIGURATION" -sdk iphonesimulator test | xcpretty -c -t -r junit --output "$WORKSPACE/build/junit.xml") || fail $?;
 }
 
 export_ipa ()

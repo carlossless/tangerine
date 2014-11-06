@@ -21,4 +21,4 @@ Other less exciting features:
 * [Cocoapods](http://cocoapods.org/)
 * Custom keychains.
 * Testing
-* Building with [xctool](https://github.com/facebook/xctool)
+* Building with [xcpretty](https://github.com/supermarin/xcpretty)

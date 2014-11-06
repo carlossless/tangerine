@@ -5,7 +5,7 @@ export SCRIPT_DIR=$(dirname "$0")
 config ()
 {
     # A whitespace-separated list of executables that must be present and locatable.
-    : ${REQUIRED_TOOLS="xctool pod jq"}
+    : ${REQUIRED_TOOLS="xcpretty pod jq"}
     
     export REQUIRED_TOOLS
 }
