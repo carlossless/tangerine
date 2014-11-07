@@ -154,7 +154,7 @@ build_archive ()
     # Build
     print_title "Building Application"
 
-    set -o pipefail && (xcodebuild -scheme "$XCSCHEME" -workspace "$XCWORKSPACE" -configuration "$BUILD_CONFIGURATION" clean archive -archivePath "$WORKSPACE/build/$XCSCHEME" "CODE_SIGN_IDENTITY=$CODE_SIGNING_IDENTITY" PROVISIONING_PROFILE="$PROFILE_UUID" | xcpretty $XCPRETTY_FLAGS) || fail $?;
+    set -o pipefail && (xcodebuild -scheme "$XCSCHEME" -workspace "$XCWORKSPACE" -configuration "$BUILD_CONFIGURATION" clean archive -archivePath "$WORKSPACE/build/$XCSCHEME" "CODE_SIGN_IDENTITY=$CODE_SIGNING_IDENTITY" "PROVISIONING_PROFILE=$PROFILE_UUID" | xcpretty $XCPRETTY_FLAGS) || fail $?;
 }
 
 test_application ()
@@ -170,7 +170,7 @@ export_ipa ()
     # Export IPA
     print_title "Creating IPA File"
 
-    xcodebuild -exportArchive -exportFormat ipa -archivePath "$WORKSPACE/build/$XCSCHEME.xcarchive" -exportPath "$IPA_PATH" -exportWithOriginalSigningIdentity || fail $?;
+    xcodebuild -exportArchive -exportFormat ipa -archivePath "$WORKSPACE/build/$XCSCHEME.xcarchive" -exportPath "$IPA_PATH" -exportProvisioningProfile "$PROVISIONING_PROFILE_NAME" || fail $?;
 }
 
 reset_keychain ()
