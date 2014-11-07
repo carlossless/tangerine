@@ -55,6 +55,9 @@ main ()
     export DSYM_PATH=$WORKSPACE/build/$XCSCHEME.xcarchive/dSYMs/$XCSCHEME.app.dSYM
     export DSYM_ZIP_PATH=$WORKSPACE/build/$XCSCHEME.app.dSYM.zip
 
+    export XCPRETTY_FLAGS="-s"
+    [ "$COLORIZED_OUTPUT" != True ] || export XCPRETTY_FLAGS="-c"
+
     [ "$KEYCHAIN" == True ] && setup_keychain
     [ "$RETRIEVE_PROFILE" == True ] && setup_profile
     [ "$COCOAPODS" == True ] && setup_pods
@@ -148,7 +151,7 @@ build_archive ()
     # Build
     print_title "Building Application"
 
-    set -o pipefail && (xcodebuild -scheme "$XCSCHEME" -workspace "$XCWORKSPACE" -configuration "$BUILD_CONFIGURATION" clean archive -archivePath "$WORKSPACE/build/$XCSCHEME" "CODE_SIGN_IDENTITY=$CODE_SIGNING_IDENTITY" PROVISIONING_PROFILE="$PROFILE_UUID" | xcpretty -c) || fail $?;
+    set -o pipefail && (xcodebuild -scheme "$XCSCHEME" -workspace "$XCWORKSPACE" -configuration "$BUILD_CONFIGURATION" clean archive -archivePath "$WORKSPACE/build/$XCSCHEME" "CODE_SIGN_IDENTITY=$CODE_SIGNING_IDENTITY" PROVISIONING_PROFILE="$PROFILE_UUID" | xcpretty $XCPRETTY_FLAGS) || fail $?;
 }
 
 test_application ()
@@ -156,7 +159,7 @@ test_application ()
     # Test
     print_title "Testing Application"
 
-    set -o pipefail && (xcodebuild -scheme "$XCSCHEME" -workspace "$XCWORKSPACE" -configuration "$BUILD_CONFIGURATION" -sdk iphonesimulator test | xcpretty -c -t -r junit --output "$WORKSPACE/build/junit.xml") || fail $?;
+    set -o pipefail && (xcodebuild -scheme "$XCSCHEME" -workspace "$XCWORKSPACE" -configuration "$BUILD_CONFIGURATION" -sdk iphonesimulator test | xcpretty $XCPRETTY_FLAGS -t -r junit --output "$WORKSPACE/build/junit.xml") || fail $?;
 }
 
 export_ipa ()
