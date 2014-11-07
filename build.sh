@@ -58,6 +58,9 @@ main ()
     export XCPRETTY_FLAGS="-s"
     [ "$COLORIZED_OUTPUT" != True ] || export XCPRETTY_FLAGS="-c"
 
+    export CURL_FLAGS="-sS"
+    [ "$TEST_FLIGHT_SHOW_PROGRESS" != True ] || export CURL_FLAGS="--progress"
+
     [ "$KEYCHAIN" == True ] && setup_keychain
     [ "$RETRIEVE_PROFILE" == True ] && setup_profile
     [ "$COCOAPODS" == True ] && setup_pods
@@ -192,7 +195,7 @@ submit_to_testflight ()
     echo "*** File: $IPA_PATH"
     echo "*** DSYM: $DSYM_ZIP_PATH"
     
-    set -o pipefail && curl http://testflightapp.com/api/builds.json --progress -F file=@$IPA_PATH -F dsym=@$DSYM_ZIP_PATH -F api_token=$TEST_FLIGHT_API_TOKEN -F team_token=$TEST_FLIGHT_TEAM_TOKEN -F notes='Testing API' -F notify=$TEST_FLIGHT_SHOULD_NOTIFY -F distribution_lists=$TEST_FLIGHT_DISTRIBUTION_LISTS | tee >(jq ".install_url" | awk '{ print "Install URL: "$1"" }') >(jq ".config_url" | awk '{ print "Config URL:  "$1"" }') > /dev/null || fail $?;
+    set -o pipefail && curl http://testflightapp.com/api/builds.json $CURL_FLAGS -F file=@$IPA_PATH -F dsym=@$DSYM_ZIP_PATH -F api_token=$TEST_FLIGHT_API_TOKEN -F team_token=$TEST_FLIGHT_TEAM_TOKEN -F notes='Testing API' -F notify=$TEST_FLIGHT_SHOULD_NOTIFY -F distribution_lists=$TEST_FLIGHT_DISTRIBUTION_LISTS | tee >(jq ".install_url" | awk '{ print "Install URL: "$1"" }') >(jq ".config_url" | awk '{ print "Config URL:  "$1"" }') > /dev/null || fail $?;
 }
 
 main
