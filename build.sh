@@ -86,6 +86,7 @@ setup_keychain ()
     security list-keychains -s "$KEYCHAIN_PATH"
     security default-keychain -d user -s "$KEYCHAIN_PATH" || fail $?
     security unlock-keychain -p $KEYCHAIN_PASSWORD "$KEYCHAIN_PATH" || fail $?
+    security set-keychain-setting -l "$KEYCHAIN_PATH"
     security show-keychain-info "$KEYCHAIN_PATH"
 }
 
