@@ -142,15 +142,16 @@ increase_build_number ()
     # Increase build number
     print_title "Increasing Build Number"
 
-    if [ -z "$EXTERNAL_BUILD_NUMBER" ] then
-        set -o pipefail && PREV_BUILD_NUMBER=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$XCSCHEME/$XCSCHEME-Info.plist") || fail $?
-    CURRENT_BUILD_NUMBER=$((PREV_BUILD_NUMBER + 1))
+    if [ -z "$EXTERNAL_BUILD_NUMBER" ]
+    then
+        set -o pipefail && PREV_BUILD_NUMBER=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$XCSCHEME/Info.plist") || fail $?
+        CURRENT_BUILD_NUMBER=$((PREV_BUILD_NUMBER + 1))
+        echo "*** Previuos Build #: $PREV_BUILD_NUMBER"
     else
-        CURRENT_BUILD_NUMBER = "$EXTERNAL_BUILD_NUMBER"
+        CURRENT_BUILD_NUMBER="$EXTERNAL_BUILD_NUMBER"
     fi
 
-    /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $CURRENT_BUILD_NUMBER" "$XCSCHEME/$XCSCHEME-Info.plist" || fail $?;
-    echo "*** Previuos Build #: $PREV_BUILD_NUMBER"
+    /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $CURRENT_BUILD_NUMBER" "$XCSCHEME/Info.plist" || fail $?;
     echo "*** Current Build #: $CURRENT_BUILD_NUMBER"
 }
 
