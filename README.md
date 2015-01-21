@@ -1,6 +1,6 @@
-# tangerine
+# 🍊 tangerine
 
-**tangerine** is a build script for building and distributing iOS apps.
+🍊 **tangerine** is a build script for building and distributing iOS apps.
 
 ## Usage
 

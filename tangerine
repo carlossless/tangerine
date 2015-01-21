@@ -8,7 +8,7 @@ config ()
     # A bootstrap script to run before building.
     #
     # If this file does not exist, it is not considered an error.
-    : ${BOOTSTRAP="$SCRIPT_DIR/bootstrap.sh"}
+    : ${BOOTSTRAP="$SCRIPT_DIR/bootstrap"}
     
     export BOOTSTRAP 
 }
@@ -16,13 +16,13 @@ config ()
 print_title ()
 {
     echo ""
-    echo "====== 🍺  "$1" 🍻  ======"
+    echo "====== 🍊 "$1" 🍊 ======"
     export CURRENT_ACTION="$1"
 }
 
 print_title_fail ()
 {
-    echo "====== 💩  "$1" ❌  ======"
+    echo "====== ❌ "$1" ❌ ======"
 }
 
 fail ()
