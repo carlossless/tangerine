@@ -8,7 +8,7 @@ config ()
     # A bootstrap script to run before building.
     #
     # If this file does not exist, it is not considered an error.
-    : ${BOOTSTRAP="$SCRIPT_DIR/bootstrap.sh"}
+    : ${BOOTSTRAP="$SCRIPT_DIR/bootstrap"}
     
     export BOOTSTRAP 
 }
@@ -16,13 +16,13 @@ config ()
 print_title ()
 {
     echo ""
-    echo "====== 🍺  "$1" 🍻  ======"
+    echo "====== 🍊 "$1" 🍊 ======"
     export CURRENT_ACTION="$1"
 }
 
 print_title_fail ()
 {
-    echo "====== 💩  "$1" ❌  ======"
+    echo "====== ❌ "$1" ❌ ======"
 }
 
 fail ()
@@ -86,6 +86,7 @@ setup_keychain ()
     security list-keychains -s "$KEYCHAIN_PATH"
     security default-keychain -d user -s "$KEYCHAIN_PATH" || fail $?
     security unlock-keychain -p $KEYCHAIN_PASSWORD "$KEYCHAIN_PATH" || fail $?
+    security set-keychain-setting -l "$KEYCHAIN_PATH"
     security show-keychain-info "$KEYCHAIN_PATH"
 }
 
@@ -141,11 +142,16 @@ increase_build_number ()
     # Increase build number
     print_title "Increasing Build Number"
 
-    set -o pipefail && PREV_BUILD_NUMBER=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$XCSCHEME/$XCSCHEME-Info.plist") || fail $?
-    CURRENT_BUILD_NUMBER=$((PREV_BUILD_NUMBER + 1))
+    if [ -z "$EXTERNAL_BUILD_NUMBER" ]
+    then
+        set -o pipefail && PREV_BUILD_NUMBER=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$XCSCHEME/Info.plist") || fail $?
+        CURRENT_BUILD_NUMBER=$((PREV_BUILD_NUMBER + 1))
+        echo "*** Previuos Build #: $PREV_BUILD_NUMBER"
+    else
+        CURRENT_BUILD_NUMBER="$EXTERNAL_BUILD_NUMBER"
+    fi
 
-    /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $CURRENT_BUILD_NUMBER" "$XCSCHEME/$XCSCHEME-Info.plist" || fail $?;
-    echo "*** Previuos Build #: $PREV_BUILD_NUMBER"
+    /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $CURRENT_BUILD_NUMBER" "$XCSCHEME/Info.plist" || fail $?;
     echo "*** Current Build #: $CURRENT_BUILD_NUMBER"
 }
 
