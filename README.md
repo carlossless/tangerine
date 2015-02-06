@@ -8,7 +8,7 @@
 Create a configuration file based on `example.config`. Let's say `Release.config`.
 Then just run the following command:
 
-	./tangerine/build.sh configs/Release.config
+	./tangerine/tangerine configs/Release.config
 
 ## Features
 
