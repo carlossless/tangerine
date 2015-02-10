@@ -104,18 +104,18 @@ setup_profile ()
 
     rm -rf *.mobileprovision
 
-    set -o pipefail && PROFILE=$(ios profiles:download --type distribution "$PROVISIONING_PROFILE_NAME" -u "$APPLE_DEVELOPER_USERNAME" -p "$APPLE_DEVELOPER_PASSWORD" --team "$APPLE_DEVELOPER_TEAM" | grep -Eoh "[A-Za-z0-9_]+\.mobileprovision") || fail $?
-    PROFILE_UUID=$(uuid_from_profile "$PROFILE")
+    set -o pipefail && PROVISIONING_PROFILE=$(ios profiles:download --type distribution "$PROVISIONING_PROFILE_NAME" -u "$APPLE_DEVELOPER_USERNAME" -p "$APPLE_DEVELOPER_PASSWORD" --team "$APPLE_DEVELOPER_TEAM" | grep -Eoh "[A-Za-z0-9_]+\.mobileprovision") || fail $?
+    PROFILE_UUID=$(uuid_from_profile "$PROVISIONING_PROFILE")
 
     export PROFILE
     export PROFILE_UUID
 
     if [ -n "$PROFILE_UUID" ]
     then             
-        echo "Installing profile $PROFILE ($PROFILE_UUID)"
-        cp -f "$PROFILE" "$HOME/Library/MobileDevice/Provisioning Profiles/${PROFILE_UUID}.mobileprovision" || fail $?
+        echo "Installing profile $PROVISIONING_PROFILE ($PROFILE_UUID)"
+        cp -f "$PROVISIONING_PROFILE" "$HOME/Library/MobileDevice/Provisioning Profiles/${PROFILE_UUID}.mobileprovision" || fail $?
     else
-        echo "*** No UUID found in $PROFILE"
+        echo "*** No UUID found in $PROVISIONING_PROFILE"
     fi
 
     cd "$WD"
