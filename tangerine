@@ -72,6 +72,7 @@ main ()
     [ "$KEYCHAIN" == True ] && reset_keychain
     [ "$TEST_FLIGHT" == True ] && prepare_dsym
     [ "$TEST_FLIGHT" == True ] && submit_to_testflight
+    [ "$CRASHLYTICS" == True ] && submit_to_crashlytics
 }
 
 setup_keychain ()
@@ -202,6 +203,21 @@ submit_to_testflight ()
     echo "*** DSYM: $DSYM_ZIP_PATH"
     
     set -o pipefail && curl http://testflightapp.com/api/builds.json $CURL_FLAGS -F file=@$IPA_PATH -F dsym=@$DSYM_ZIP_PATH -F api_token=$TEST_FLIGHT_API_TOKEN -F team_token=$TEST_FLIGHT_TEAM_TOKEN -F notes='Testing API' -F notify=$TEST_FLIGHT_SHOULD_NOTIFY -F distribution_lists=$TEST_FLIGHT_DISTRIBUTION_LISTS | tee >(jq ".install_url" | awk '{ print "Install URL: "$1"" }') >(jq ".config_url" | awk '{ print "Config URL:  "$1"" }') > /dev/null || fail $?;
+}
+
+submit_to_crashlytics ()
+{
+    # Submit to Crashlytics
+    print_title "Uploading to Crashlytics"
+
+    echo "*** File: $IPA_PATH"
+
+    CRASHLYTICS_EMAILS_OPT="-emails "$CRASHLYTICS_EMAILS""
+    CRASHLYTICS_NOTES_PATH_OPT="-notesPath "$CRASHLYTICS_NOTES_PATH""
+    CRASHLYTICS_GROUP_ALIASES_OPT="-groupAliases "$CRASHLYTICS_GROUP_ALIASES""
+    CRASHLYTICS_NOTIFICATIONS_OPT="-notifications "$CRASHLYTICS_NOTIFICATIONS""
+
+    "$CRASHLYTICS_FRAMEWORK_PATH"/submit "$CRASHLYTICS_API_KEY" "$CRASHLYTICS_BUILD_SECRET" -ipaPath "$IPA_PATH" $CRASHLYTICS_EMAILS_OPT $CRASHLYTICS_NOTES_PATH_OPT $CRASHLYTICS_GROUP_ALIASES_OPT $CRASHLYTICS_NOTIFICATIONS_OPT
 }
 
 main
