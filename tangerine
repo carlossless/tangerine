@@ -69,10 +69,10 @@ main ()
     build_archive
     [ "$TEST" == True ] && test_application
     [ "$EXPORT_IPA" == True ] && export_ipa
-    [ "$KEYCHAIN" == True ] && reset_keychain
     [ "$TEST_FLIGHT" == True ] && prepare_dsym
     [ "$TEST_FLIGHT" == True ] && submit_to_testflight
     [ "$CRASHLYTICS" == True ] && submit_to_crashlytics
+    [ "$KEYCHAIN" == True ] && reset_keychain
 }
 
 setup_keychain ()
@@ -216,9 +216,6 @@ submit_to_crashlytics ()
     CRASHLYTICS_NOTES_PATH_OPT="-notesPath "$CRASHLYTICS_NOTES_PATH""
     CRASHLYTICS_GROUP_ALIASES_OPT="-groupAliases "$CRASHLYTICS_GROUP_ALIASES""
     CRASHLYTICS_NOTIFICATIONS_OPT="-notifications "$CRASHLYTICS_NOTIFICATIONS""
-
-    #Crashlytics uses this to point to the specific keychain we're using
-    CODE_SIGN_KEYCHAIN="$KEYCHAIN_PATH"
 
     "$CRASHLYTICS_FRAMEWORK_PATH"/submit "$CRASHLYTICS_API_KEY" "$CRASHLYTICS_BUILD_SECRET" -ipaPath "$IPA_PATH" $CRASHLYTICS_EMAILS_OPT $CRASHLYTICS_NOTES_PATH_OPT $CRASHLYTICS_GROUP_ALIASES_OPT $CRASHLYTICS_NOTIFICATIONS_OPT
 }
