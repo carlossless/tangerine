@@ -51,9 +51,7 @@ main ()
         fail 1
     fi
 
-    export IPA_PATH=$WORKSPACE/build/$XCSCHEME.ipa
-    export DSYM_PATH=$WORKSPACE/build/$XCSCHEME.xcarchive/dSYMs/$XCSCHEME.app.dSYM
-    export DSYM_ZIP_PATH=$WORKSPACE/build/$XCSCHEME.app.dSYM.zip
+    export BUILD_PATH="$WORKSPACE"/build
 
     export XCPRETTY_FLAGS="-s"
     [ "$COLORIZED_OUTPUT" != True ] || export XCPRETTY_FLAGS="-c"
@@ -62,13 +60,25 @@ main ()
     [ "$TEST_FLIGHT_SHOW_PROGRESS" != True ] || export CURL_FLAGS="--progress"
 
     [ "$KEYCHAIN" == True ] && setup_keychain
+    [ -e "$PROFILE_PATH" ] && import_provisioning_profile
     [ "$RETRIEVE_PROFILE" == True ] && setup_profile
     [ "$COCOAPODS" == True ] && setup_pods
     clean_artifacts
     [ "$INCREASE_BUILD_NUMBER" == True ] && increase_build_number
+
+    get_build_number
+
+    export ARTIFACT_NAME="$XCSCHEME-$CURRENT_VERSION_STRING-$CURRENT_BUILD_NUMBER"
+    export ARCHIVE_PATH="$BUILD_PATH"/"$ARTIFACT_NAME".xcarchive
+    export IPA_PATH="$BUILD_PATH"/"$ARTIFACT_NAME".ipa
+    export DSYM_PATH="$ARCHIVE_PATH"/dSYMs/$XCSCHEME.app.dSYM
+    export DSYM_ZIP_PATH="$BUILD_PATH"/"$ARTIFACT_NAME".app.dSYM.zip
+    export IPA_ZIP_PATH="$BUILD_PATH"/"$ARTIFACT_NAME".zip
+
     build_archive
     [ "$TEST" == True ] && test_application
     [ "$EXPORT_IPA" == True ] && export_ipa
+    [ "$ZIP_ARTIFACTS" == True ] && zip_artifacts
     [ "$TEST_FLIGHT" == True ] && prepare_dsym
     [ "$TEST_FLIGHT" == True ] && submit_to_testflight
     [ "$CRASHLYTICS" == True ] && submit_to_crashlytics
@@ -96,12 +106,28 @@ function uuid_from_profile
     grep -aA1 UUID "$1" | grep -o "[-a-zA-Z0-9]\{36\}"
 }
 
+import_provisioning_profile ()
+{
+    # Import Provisioning Profile
+    print_title "Archiving DSYMs"
+
+    export PROFILE_UUID=$(uuid_from_profile "$PROFILE_PATH")
+
+    if [ -n "$PROFILE_UUID" ]
+    then             
+        echo "Installing profile \"$PROFILE_PATH\" ($PROFILE_UUID)"
+        cp -f "$PROFILE_PATH" "$HOME/Library/MobileDevice/Provisioning Profiles/$PROFILE_UUID.mobileprovision" || fail $?
+    else
+        echo "*** No UUID found in $PROVISIONING_PROFILE"
+    fi
+}
+
 setup_profile ()
 {
     print_title "Setting Up Profile"
     WD=$(pwd)
-    mkdir -p "$WORKSPACE"/build/profiles
-    cd "$WORKSPACE"/build/profiles
+    mkdir -p "$BUILD_PATH"/profiles
+    cd "$BUILD_PATH"/profiles
 
     rm -rf *.mobileprovision
 
@@ -114,7 +140,7 @@ setup_profile ()
     if [ -n "$PROFILE_UUID" ]
     then             
         echo "Installing profile $PROVISIONING_PROFILE ($PROFILE_UUID)"
-        cp -f "$PROVISIONING_PROFILE" "$HOME/Library/MobileDevice/Provisioning Profiles/${PROFILE_UUID}.mobileprovision" || fail $?
+        cp -f "$PROVISIONING_PROFILE" "$HOME/Library/MobileDevice/Provisioning Profiles/$PROFILE_UUID.mobileprovision" || fail $?
     else
         echo "*** No UUID found in $PROVISIONING_PROFILE"
     fi
@@ -125,17 +151,18 @@ setup_profile ()
 setup_pods ()
 {
     print_title "Setting Up Pods"
-    pod repo update
-    pod update
+    pod repo update || fail $?;
+    pod update || fail $?;
 }
 
 clean_artifacts ()
 {
     # Clean Previuos Artifacts
     print_title "Cleaning Artifacts"
-    rm -rf $WORKSPACE/build/$XCSCHEME.xcarchive || fail $?;
-    rm -f $WORKSPACE/build/$XCSCHEME.ipa || fail $?;
-    rm -f build/tf_upload.log || fail $?;
+    rm -rf "$BUILD_PATH"/*.xcarchive || fail $?;
+    rm -f "$BUILD_PATH"/*.ipa || fail $?;
+    rm -f "$BUILD_PATH"/*.zip || fail $?;
+    rm -f "$BUILD_PATH"/tf_upload.log || fail $?;
 }
 
 increase_build_number ()
@@ -153,7 +180,17 @@ increase_build_number ()
     fi
 
     /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $CURRENT_BUILD_NUMBER" "$XCSCHEME/Info.plist" || fail $?;
-    echo "*** Current Build #: $CURRENT_BUILD_NUMBER"
+}
+
+get_build_number ()
+{
+	# Retrieve build number
+	print_title "Retrieving Build Number"
+
+	export CURRENT_VERSION_STRING=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$XCSCHEME/Info.plist") || fail $?
+	export CURRENT_BUILD_NUMBER=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$XCSCHEME/Info.plist") || fail $?
+
+	echo "*** Current Version #: $CURRENT_VERSION_STRING $CURRENT_BUILD_NUMBER"
 }
 
 build_archive ()
@@ -161,7 +198,7 @@ build_archive ()
     # Build
     print_title "Building Application"
 
-    set -o pipefail && (xcodebuild -scheme "$XCSCHEME" -workspace "$XCWORKSPACE" -configuration "$BUILD_CONFIGURATION" clean archive -archivePath "$WORKSPACE/build/$XCSCHEME" "CODE_SIGN_IDENTITY=$CODE_SIGNING_IDENTITY" "PROVISIONING_PROFILE=$PROFILE_UUID" | xcpretty $XCPRETTY_FLAGS) || fail $?;
+    set -o pipefail && (xcodebuild -scheme "$XCSCHEME" -workspace "$XCWORKSPACE" -configuration "$BUILD_CONFIGURATION" clean archive -archivePath "$ARCHIVE_PATH" "CODE_SIGN_IDENTITY=$CODE_SIGNING_IDENTITY" "PROVISIONING_PROFILE=$PROFILE_UUID" | xcpretty $XCPRETTY_FLAGS) || fail $?;
 }
 
 test_application ()
@@ -169,7 +206,7 @@ test_application ()
     # Test
     print_title "Testing Application"
 
-    set -o pipefail && (xcodebuild -scheme "$XCSCHEME" -workspace "$XCWORKSPACE" -configuration "$BUILD_CONFIGURATION" -sdk iphonesimulator test | xcpretty $XCPRETTY_FLAGS -t -r junit --output "$WORKSPACE/build/junit.xml") || fail $?;
+    set -o pipefail && (xcodebuild -scheme "$XCSCHEME" -workspace "$XCWORKSPACE" -configuration "$BUILD_CONFIGURATION" -sdk iphonesimulator test | xcpretty $XCPRETTY_FLAGS -t -r junit --output "$BUILD_PATH"/junit.xml) || fail $?;
 }
 
 export_ipa ()
@@ -177,7 +214,7 @@ export_ipa ()
     # Export IPA
     print_title "Creating IPA File"
 
-    xcodebuild -exportArchive -exportFormat ipa -archivePath "$WORKSPACE/build/$XCSCHEME.xcarchive" -exportPath "$IPA_PATH" -exportProvisioningProfile "$PROVISIONING_PROFILE_NAME" || fail $?;
+    xcodebuild -exportArchive -exportFormat ipa -archivePath "$ARCHIVE_PATH" -exportPath "$IPA_PATH" -exportProvisioningProfile "$PROVISIONING_PROFILE_NAME" || fail $?;
 }
 
 reset_keychain ()
@@ -191,7 +228,20 @@ prepare_dsym ()
     # Prepare DSYM File
     print_title "Archiving DSYMs"
 
-    zip -r $DSYM_ZIP_PATH $DSYM_PATH || fail $?;
+    zip -rj $DSYM_ZIP_PATH "$DSYM_PATH" || fail $?;
+}
+
+zip_artifacts ()
+{
+	# Zip DSYM and IPA.
+	print_title "Archiving Build Artifacts"
+	
+	ABS_WORK_DIR=$(pwd)
+
+	pushd $DSYM_PATH/..
+	zip -r "$ABS_WORK_DIR"/"$IPA_ZIP_PATH" "$XCSCHEME".app.dSYM || fail $?;
+	popd
+	zip -j "$IPA_ZIP_PATH" "$IPA_PATH" || fail $?;
 }
 
 submit_to_testflight ()
