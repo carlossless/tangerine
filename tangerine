@@ -276,3 +276,4 @@ submit_to_crashlytics ()
 }
 
 main
+exit 0
