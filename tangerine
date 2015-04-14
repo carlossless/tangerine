@@ -42,6 +42,8 @@ main ()
         "$BOOTSTRAP" || exit $?
     fi
 
+    INFO_PLIST_PATH="$XCSCHEME/Info.plist"
+
     print_title "Configuring"
     if [ -f "$CONFIG" ]
     then
@@ -172,14 +174,14 @@ increase_build_number ()
 
     if [ -z "$EXTERNAL_BUILD_NUMBER" ]
     then
-        set -o pipefail && PREV_BUILD_NUMBER=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$XCSCHEME/Info.plist") || fail $?
+        set -o pipefail && PREV_BUILD_NUMBER=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$INFO_PLIST_PATH") || fail $?
         CURRENT_BUILD_NUMBER=$((PREV_BUILD_NUMBER + 1))
         echo "*** Previuos Build #: $PREV_BUILD_NUMBER"
     else
         CURRENT_BUILD_NUMBER="$EXTERNAL_BUILD_NUMBER"
     fi
 
-    /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $CURRENT_BUILD_NUMBER" "$XCSCHEME/Info.plist" || fail $?;
+    /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $CURRENT_BUILD_NUMBER" "$INFO_PLIST_PATH" || fail $?;
 }
 
 get_build_number ()
@@ -187,8 +189,8 @@ get_build_number ()
 	# Retrieve build number
 	print_title "Retrieving Build Number"
 
-	export CURRENT_VERSION_STRING=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$XCSCHEME/Info.plist") || fail $?
-	export CURRENT_BUILD_NUMBER=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$XCSCHEME/Info.plist") || fail $?
+	export CURRENT_VERSION_STRING=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$INFO_PLIST_PATH") || fail $?
+	export CURRENT_BUILD_NUMBER=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$INFO_PLIST_PATH") || fail $?
 
 	echo "*** Current Version #: $CURRENT_VERSION_STRING $CURRENT_BUILD_NUMBER"
 }
