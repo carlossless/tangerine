@@ -59,7 +59,7 @@ main ()
     [ "$COLORIZED_OUTPUT" != True ] || export XCPRETTY_FLAGS="-c"
 
     export CURL_FLAGS="-sS"
-    [ "$TEST_FLIGHT_SHOW_PROGRESS" != True ] || export CURL_FLAGS="--progress"
+    export CURL_FLAGS="--progress"
 
     [ "$KEYCHAIN" == True ] && setup_keychain
     [ -e "$PROFILE_PATH" ] && import_provisioning_profile
@@ -81,8 +81,6 @@ main ()
     [ "$TEST" == True ] && test_application
     [ "$EXPORT_IPA" == True ] && export_ipa
     [ "$ZIP_ARTIFACTS" == True ] && zip_artifacts
-    [ "$TEST_FLIGHT" == True ] && prepare_dsym
-    [ "$TEST_FLIGHT" == True ] && submit_to_testflight
     [ "$CRASHLYTICS" == True ] && submit_to_crashlytics
     [ "$KEYCHAIN" == True ] && reset_keychain
 }
@@ -221,6 +219,7 @@ export_ipa ()
 
 reset_keychain ()
 {
+    print_title "Resetting keychain"
     security list-keychains -d user -s "${HOME}/Library/Keychains/login.keychain"
     security default-keychain -d user -s "${HOME}/Library/Keychains/login.keychain"
 }
@@ -246,17 +245,6 @@ zip_artifacts ()
 	zip -j "$IPA_ZIP_PATH" "$IPA_PATH" || fail $?;
 }
 
-submit_to_testflight ()
-{
-    # Submit to TestFlight
-    print_title "Uploading to TestFlight"
-
-    echo "*** File: $IPA_PATH"
-    echo "*** DSYM: $DSYM_ZIP_PATH"
-    
-    set -o pipefail && curl http://testflightapp.com/api/builds.json $CURL_FLAGS -F file=@$IPA_PATH -F dsym=@$DSYM_ZIP_PATH -F api_token=$TEST_FLIGHT_API_TOKEN -F team_token=$TEST_FLIGHT_TEAM_TOKEN -F notes='Testing API' -F notify=$TEST_FLIGHT_SHOULD_NOTIFY -F distribution_lists=$TEST_FLIGHT_DISTRIBUTION_LISTS | tee >(jq ".install_url" | awk '{ print "Install URL: "$1"" }') >(jq ".config_url" | awk '{ print "Config URL:  "$1"" }') > /dev/null || fail $?;
-}
-
 submit_to_crashlytics ()
 {
     # Submit to Crashlytics
@@ -274,6 +262,8 @@ submit_to_crashlytics ()
 
     "$CRASHLYTICS_FRAMEWORK_PATH"/submit "$CRASHLYTICS_API_KEY" "$CRASHLYTICS_BUILD_SECRET" -ipaPath "$IPA_PATH" $CRASHLYTICS_EMAILS_OPT $CRASHLYTICS_NOTES_PATH_OPT $CRASHLYTICS_GROUP_ALIASES_OPT $CRASHLYTICS_NOTIFICATIONS_OPT
 }
+
+trap reset_keychain EXIT
 
 main
 exit 0

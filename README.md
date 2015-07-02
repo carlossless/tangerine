@@ -15,7 +15,6 @@ Then just run the following command:
 Currently **tangerine** supports the following:
 
 * Downloading the latest provisioning profile from the Apple Developer portal with [cupertino](https://github.com/nomad/Cupertino)
-* Distrubution through [TestFlight](https://www.testflightapp.com)
 * Distrubution through [Crashlytics](https://crashlytics.com/)
 
 Other less exciting features:
