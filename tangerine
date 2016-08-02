@@ -101,7 +101,7 @@ setup_keychain ()
     security show-keychain-info "$KEYCHAIN_PATH"
 }
 
-function uuid_from_profile
+uuid_from_profile ()
 {
     grep -aA1 UUID "$1" | grep -o "[-a-zA-Z0-9]\{36\}"
 }
